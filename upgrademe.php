@@ -25,7 +25,7 @@ class Upgrademe
 		$r = new ReflectionClass(__CLASS__);
 		$methods = $r->getMethods(ReflectionMethod::IS_PUBLIC);
 		foreach($methods as $m)
-		{
+		{			
 			/** @var ReflectionMethod $m */
 			if ($m->isStatic() && strpos($m->getName(), self::$WP_FILTER_PREFIX) === 0) {
 				add_filter(substr($m->getName(), strlen(self::$WP_FILTER_PREFIX)), array(get_class(), $m->getName()),
@@ -71,6 +71,7 @@ class Upgrademe
 		# Collect retrieved (only valid) data into $upgrademe
 		$plugins = get_plugins();
 		$upgrademe = array();
+		
 		foreach($plugins as $file => $info)
 		{
 			# Get url if function exists
@@ -89,29 +90,32 @@ class Upgrademe
 			return $response;
 
 		$body = $response['body'];
+
 		if (!empty($body))
-			$body = unserialize($body);
+			$body = json_decode($body,true);
 		if (empty($body))
 			$body = array();
+		
+
 		foreach($upgrademe as $file => $upgradeVars)
 		{
+		
 			# Do not override data returned by official WP plugins repository API
-			if (isset($body[$file]))
-				continue;
+			if (isset($body['plugins'][$file]))	continue;
 
 			# If new version is different then current one, only then add info
 			if (!isset($plugins[$file]['Version']) || $plugins[$file]['Version'] == $upgradeVars['new_version'])
 				continue;
 
-			$upgradeInfo = new stdClass();
-			$upgradeInfo->id = $upgradeVars['id'];
-			$upgradeInfo->slug = $upgradeVars['slug'];
-			$upgradeInfo->new_version = $upgradeVars['new_version'];
-			$upgradeInfo->url = $upgradeVars['url'];
-			$upgradeInfo->package = $upgradeVars['package'];
-			$body[$file] = $upgradeInfo;
+			$upgradeInfo =  array();
+			$upgradeInfo['id'] = $upgradeVars['id'];
+			$upgradeInfo['slug'] = $upgradeVars['slug'];
+			$upgradeInfo['new_version'] = $upgradeVars['new_version'];
+			$upgradeInfo['url'] = $upgradeVars['url'];
+			$upgradeInfo['package'] = $upgradeVars['package'];
+			$body['plugins'][$file] = $upgradeInfo;			
 		}
-		$response['body'] = serialize($body);
+		$response['body'] = json_encode($body);
 		return $response;
 	}
 
@@ -194,11 +198,11 @@ class Upgrademe
 		return self::$data[$slug] = $vars;
 	}
 }
-Upgrademe::register();
+
+add_action("plugins_loaded",'Upgrademe::register',1000);
 
 function upgrademe_upgrademe()
 {
 	return 'https://raw.github.com/meglio/wp-upgrademe/master/meta.php';
 }
-
 } # class_exists()

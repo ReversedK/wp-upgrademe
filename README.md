@@ -1,3 +1,8 @@
+## CREDITS
+This is a fork of Anton Andriyevskyy's plugin (https://github.com/meglio/wp-upgrademe). The original plugin has been coded 5 years ago and would not work with more recent versions of Wordpress. I just modified a few lines to adapt the code to WP4.0+.  
+
+The following notice is an unedited reproduction of Anton's original instructions :
+
 ## What it does
 
 **upgrademe** allows any WordPress plugin to register its own url for querying about newly available versions
